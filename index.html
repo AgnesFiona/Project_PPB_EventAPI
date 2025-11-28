@@ -10,10 +10,9 @@
 
     <h1>Event Manager</h1>
 
-    <!-- EVENT LIST -->
     <section>
         <h2>Semua Event</h2>
-        <button onclick="loadEvents()">Reload Data</button>
+        <button onclick="loadEvents()">Reload Data</button> 
 
         <table>
             <thead>
@@ -27,19 +26,18 @@
                     <th>Aksi</th>
                 </tr>
             </thead>
-            <tbody id="table-body"></tbody>
+            <tbody id="table-body"></tbody> 
         </table>
     </section>
 
     <hr style="margin: 30px 0;">
 
-    <!-- FORM -->
     <section>
         <h2 id="form-title">Tambah Event</h2>
 
         <form id="event-form">
             <input type="hidden" id="event-id">
-
+            
             <input id="title" placeholder="Judul" required>
             <input id="date" type="date" required>
             <input id="time" type="time" required>
