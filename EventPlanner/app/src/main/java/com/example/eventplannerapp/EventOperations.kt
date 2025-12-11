@@ -54,4 +54,20 @@ class EventOperations(context: Context) {
         val db = dbHelper.writableDatabase
         db.delete(DatabaseHelper.TABLE_EVENTS, "${DatabaseHelper.COLUMN_ID}=?", arrayOf(id.toString()))
     }
+
+    fun getAllEventDates(): Set<String> {
+        val db = dbHelper.readableDatabase
+        val cursor = db.rawQuery(
+            "SELECT DISTINCT ${DatabaseHelper.COLUMN_DATE} FROM ${DatabaseHelper.TABLE_EVENTS}",
+            null
+        )
+        val dates = mutableSetOf<String>()
+        if (cursor.moveToFirst()) {
+            do {
+                dates.add(cursor.getString(cursor.getColumnIndexOrThrow(DatabaseHelper.COLUMN_DATE)))
+            } while (cursor.moveToNext())
+        }
+        cursor.close()
+        return dates
+    }
 }

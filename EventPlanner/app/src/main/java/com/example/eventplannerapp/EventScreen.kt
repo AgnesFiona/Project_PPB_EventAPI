@@ -6,7 +6,6 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
-import androidx.compose.material.icons.filled.DateRange
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
@@ -19,11 +18,12 @@ import java.time.Instant
 import java.time.ZoneId
 import androidx.compose.ui.Alignment
 import java.time.LocalDate
+import com.example.eventplannerapp.ui.component.AppTopBar
+import java.time.format.DateTimeFormatter
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun EventScreen(viewModel: EventViewModel) {
-    // State untuk tanggal yang dipilih user
     var selectedDate by remember { mutableStateOf(LocalDate.now().toString()) }
 
     val events by viewModel.events.collectAsState()
@@ -33,20 +33,15 @@ fun EventScreen(viewModel: EventViewModel) {
     var showEditDialog by remember { mutableStateOf<Event?>(null) }
     var showDatePicker by remember { mutableStateOf(false) }
 
-    // setiap kali selectedDate berubah, load event baru
     LaunchedEffect(selectedDate) {
         viewModel.loadEventsByDate(selectedDate)
     }
 
     Scaffold(
         topBar = {
-            TopAppBar(
-                title = { Text("LastMinute.ly") },
-                actions = {
-                    IconButton(onClick = { showDatePicker = true }) {
-                        Icon(Icons.Default.DateRange, contentDescription = "Pilih Tanggal")
-                    }
-                }
+            AppTopBar(
+                title = "LastMinute.ly",
+                onDateClick = { showDatePicker = true }
             )
         },
         floatingActionButton = {
@@ -55,24 +50,46 @@ fun EventScreen(viewModel: EventViewModel) {
             }
         }
     ) { innerPadding ->
-        LazyColumn(
-            modifier = Modifier.padding(innerPadding).fillMaxSize()
-        ) {
-            items(events) { event ->
-                Card(
-                    modifier = Modifier.fillMaxWidth().padding(8.dp),
-                    shape = RoundedCornerShape(16.dp),
-                    colors = CardDefaults.cardColors(containerColor = Color(0xFFEDE7F6))
-                ) {
-                    Column(Modifier.padding(16.dp)) {
-                        Text(event.title, fontWeight = FontWeight.Bold, fontSize = 18.sp)
-                        Text(event.description, color = Color.Gray)
-                        Text("Tanggal: ${event.date}", fontSize = 12.sp, color = Color.DarkGray)
+        if (events.isEmpty()) {
+            Box(
+                modifier = Modifier
+                    .padding(innerPadding)
+                    .fillMaxSize(),
+                contentAlignment = Alignment.Center
+            ) {
+                Text(
+                    text = "Tidak ada event pada tanggal ini (${
+                        LocalDate.parse(selectedDate).format(DateTimeFormatter.ofPattern("dd MMM yyyy"))
+                    })",
+                    fontSize = 18.sp,
+                    color = Color.Gray
+                )
+            }
+        } else {
+            LazyColumn(
+                modifier = Modifier.padding(innerPadding).fillMaxSize()
+            ) {
+                items(events) { event ->
+                    Card(
+                        modifier = Modifier.fillMaxWidth().padding(8.dp),
+                        shape = RoundedCornerShape(16.dp),
+                        colors = CardDefaults.cardColors(containerColor = Color(0xFFEDE7F6))
+                    ) {
+                        Column(Modifier.padding(16.dp)) {
+                            Text(event.title, fontWeight = FontWeight.Bold, fontSize = 18.sp)
+                            Text(event.description, color = Color.Gray)
+                            Text("Tanggal: ${event.date}", fontSize = 12.sp, color = Color.DarkGray)
 
-                        Row {
-                            TextButton(onClick = { showEditDialog = event }) { Text("Edit") }
-                            Spacer(Modifier.width(8.dp))
-                            TextButton(onClick = { showDeleteDialog = event }) { Text("Delete", color = Color.Red) }
+                            Row {
+                                TextButton(onClick = { showEditDialog = event }) { Text("Edit") }
+                                Spacer(Modifier.width(8.dp))
+                                TextButton(onClick = { showDeleteDialog = event }) {
+                                    Text(
+                                        "Delete",
+                                        color = Color.Red
+                                    )
+                                }
+                            }
                         }
                     }
                 }
@@ -80,7 +97,6 @@ fun EventScreen(viewModel: EventViewModel) {
         }
     }
 
-    // Dialog Tambah Event → pakai selectedDate yang bisa berubah
     if (showAddDialog) {
         AddEventDialog(
             onDismiss = { showAddDialog = false },
@@ -89,52 +105,25 @@ fun EventScreen(viewModel: EventViewModel) {
         )
     }
 
-    // Konfirmasi Hapus
     showDeleteDialog?.let { event ->
         DeleteConfirmDialog(onDismiss = { showDeleteDialog = null }, onConfirm = {
             viewModel.deleteEvent(event)
         })
     }
 
-    // Edit Event
     showEditDialog?.let { event ->
         EditEventDialog(event, onDismiss = { showEditDialog = null }, onUpdate = {
             viewModel.updateEvent(it)
         })
     }
 
-    // DatePicker → update selectedDate
     if (showDatePicker) {
         DatePickerDialog(
             onDateSelected = { date ->
-                selectedDate = date   // update state
+                selectedDate = date
             },
             onDismiss = { showDatePicker = false }
         )
-    }
-
-    if (showAddDialog) {
-        AddEventDialog(onDismiss = { showAddDialog = false }, onAdd = { t, d, date ->
-            viewModel.addEvent(t, d, date)
-        }, selectedDate = selectedDate)
-    }
-
-    showDeleteDialog?.let { event ->
-        DeleteConfirmDialog(onDismiss = { showDeleteDialog = null }, onConfirm = {
-            viewModel.deleteEvent(event)
-        })
-    }
-
-    showEditDialog?.let { event ->
-        EditEventDialog(event, onDismiss = { showEditDialog = null }, onUpdate = {
-            viewModel.updateEvent(it)
-        })
-    }
-
-    if (showDatePicker) {
-        DatePickerDialog(onDateSelected = { date ->
-            viewModel.loadEventsByDate(date)
-        }, onDismiss = { showDatePicker = false })
     }
 }
 
@@ -182,7 +171,6 @@ fun AddEventDialog(
         }
     )
 
-    // DatePicker dialog muncul jika user klik "Pilih Tanggal"
     if (showDatePicker.value) {
         DatePickerDialog(
             onDateSelected = { selected ->
@@ -249,7 +237,6 @@ fun EditEventDialog(event: Event, onDismiss: () -> Unit, onUpdate: (Event) -> Un
         }
     )
 
-    // DatePicker dialog muncul jika user klik "Pilih Tanggal"
     if (showDatePicker.value) {
         DatePickerDialog(
             onDateSelected = { selected ->
@@ -259,7 +246,6 @@ fun EditEventDialog(event: Event, onDismiss: () -> Unit, onUpdate: (Event) -> Un
         )
     }
 }
-
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable

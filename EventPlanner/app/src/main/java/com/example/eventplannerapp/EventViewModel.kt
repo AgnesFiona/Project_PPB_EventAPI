@@ -21,6 +21,7 @@ class EventViewModel(private val ops: EventOperations) : ViewModel() {
         viewModelScope.launch {
             ops.addEvent(title, desc, date)
             loadEventsByDate(date)
+
         }
     }
 
@@ -35,6 +36,8 @@ class EventViewModel(private val ops: EventOperations) : ViewModel() {
         viewModelScope.launch {
             ops.deleteEvent(event.id)
             loadEventsByDate(event.date)
+            // HAPUS: loadAllEventDates()
         }
     }
+
 }
